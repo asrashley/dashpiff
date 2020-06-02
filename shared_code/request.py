@@ -2,35 +2,28 @@
 Utility function to make an HTTP request to origin
 """
 import logging
-from typing import Dict, List
+from typing import Dict
 import urllib
 
 import azure.functions as func
 import requests
 
-def make_request(req: func.HttpRequest, origin_host: str,
-                 origin_path: str, param: str) -> requests.Response:
+def fetch(req: func.HttpRequest, url: str) -> requests.Response:
     """
-    Make an HTTP GET request to origin. It replaces the host and path from
-    the request URL with "origin_host" and "origin_path". Any query
-    parameters are copied into the origin request.
+    Make an HTTP GET request to origin. It copies the HTTP headers
+    from the client request into the origin request. Any query
+    parameters are also copied into the origin request.
 
-    :origin_host: the DNS name of origin host
-    :origin_path: the URL path to use as the start of the origin request
-    :params: the name of URL parameter to extract from the client request
+    :req: the client request
+    :url: The origin URL
     """
     headers: Dict[str, str] = {}
     headers.update(req.headers)
-    headers['host'] = origin_host
-    try:
-        parts = [origin_path, req.route_params[param]]
-        path = '/'.join(parts)
-    except KeyError as err:
-        logging.warning("Failed to get route parameters from client request: %s", err)
-        path = origin_path
-    query: str = ''
+    parts = urllib.parse.urlparse(url)
+    query = parts.query
     if req.params:
         query = urllib.parse.urlencode(req.params)
-    url = urllib.parse.urlunsplit(('http', origin_host, path, query, ''))
-    logging.debug("Request %s", url)
-    return requests.get(url, headers=headers)
+    headers['host'] = parts.hostname
+    origin_url = urllib.parse.urlunsplit((parts[0], parts[1], parts[2], query, parts[4]))
+    logging.debug("Request %s", origin_url)
+    return requests.get(origin_url, headers=headers)

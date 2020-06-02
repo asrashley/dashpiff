@@ -9,7 +9,7 @@
       "methods": [
         "get"
       ],
-      "route": "media/{*path}"
+      "route": "media/{origin}/{*path}"
     },
     {
       "type": "http",

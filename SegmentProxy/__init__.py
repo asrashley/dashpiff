@@ -7,12 +7,12 @@ box that has no defined content.
 import binascii
 import logging
 from typing import Dict, Optional
+import urllib
 
 import azure.functions as func
 
 # pylint: disable=relative-beyond-top-level
-from ..shared_code.constants import MEDIA_HOST, MEDIA_PATH
-from ..shared_code.request import make_request
+from ..shared_code.request import fetch
 
 PIFF_UUID = binascii.a2b_hex("a2394f525a9b4f14a2446c427c648df4")
 
@@ -20,11 +20,20 @@ PIFF_UUID = binascii.a2b_hex("a2394f525a9b4f14a2446c427c648df4")
 FREE_UUID = binascii.a2b_hex("6672656500110010800000AA00389B71")
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.debug('Processing media request %s', req.route_params.get('path'))
+    """
+    An httpTrigger lambda that will remove the PIFF box in DASH
+    media segments by translating them into "free" boxes.
+    """
+    logging.debug('Processing media request %s %s',
+        req.route_params.get('origin'), req.route_params.get('path'))
 
-    # TODO: use streamed mode to save having to wait for whole segment
-    # to be fetched from origin
-    origin = make_request(req, MEDIA_HOST, MEDIA_PATH, 'path')
+    # extract the original BaseURL from the URL that triggered this
+    # function and then append the segment path, to create a URL
+    # to fetch from origin.
+    origin_url = urllib.parse.unquote(req.route_params.get('origin'))
+    origin_url = urllib.parse.urljoin(origin_url, req.route_params.get('path'))
+
+    origin = fetch(req, origin_url)
     try:
         mimetype = origin.headers['Content-Type']
     except KeyError:
