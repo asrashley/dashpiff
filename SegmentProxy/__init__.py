@@ -12,7 +12,7 @@ import urllib
 import azure.functions as func
 
 # pylint: disable=relative-beyond-top-level
-from ..shared_code.request import fetch
+from ..shared_code.request import fetch, decode_url
 
 PIFF_UUID = binascii.a2b_hex("a2394f525a9b4f14a2446c427c648df4")
 
@@ -30,8 +30,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     # extract the original BaseURL from the URL that triggered this
     # function and then append the segment path, to create a URL
     # to fetch from origin.
-    origin_url = urllib.parse.unquote(req.route_params.get('origin'))
-    origin_url = urllib.parse.urljoin(origin_url, req.route_params.get('path'))
+    base_url = decode_url(req.route_params.get('origin'))
+    origin_url = urllib.parse.urljoin(base_url, req.route_params.get('path'))
 
     origin = fetch(req, origin_url)
     try:

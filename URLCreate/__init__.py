@@ -3,12 +3,15 @@ A lambda to encode a manifest URL so that it points to the
 "ManifestProxy" lambda. The "ManifestProxy" lambda is able
 to extract the original URL and fetch it from the origin.
 """
-
+import binascii
 import json
 import logging
 import urllib
 
 import azure.functions as func
+
+# pylint: disable=relative-beyond-top-level
+from ..shared_code.request import encode_url
 
 def extract_url_from_request(req: func.HttpRequest) -> str:
     """
@@ -52,7 +55,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if parts.port and parts.port != 80:
             manifest_url.append(f':{parts.port}')
         manifest_url.append('/api/dash/')
-        manifest_url.append(urllib.parse.quote(url))
+        manifest_url.append(encode_url(url))
         result = dict(url=''.join(manifest_url))
         return func.HttpResponse(body=json.dumps(result), mimetype="application/json",
             status_code=200)

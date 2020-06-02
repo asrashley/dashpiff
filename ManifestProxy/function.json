@@ -9,7 +9,7 @@
       "methods": [
         "get"
       ],
-      "route": "dash/{*manifest}"
+      "route": "dash/{manifest}"
     },
     {
       "type": "http",

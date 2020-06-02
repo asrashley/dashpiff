@@ -7,8 +7,9 @@ to the SegmentProxy lambda.
 import binascii
 import logging
 import re
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 import urllib
+from xml.sax.saxutils import unescape
 
 import azure.functions as func
 
@@ -18,9 +19,9 @@ baseurl_re = re.compile(r'<BaseURL>(?P<url>[^<]+)</BaseURL>')
 
 # pylint: disable=relative-beyond-top-level
 from ..shared_code import constants
-from ..shared_code.request import fetch
+from ..shared_code.request import decode_url, encode_url, fetch
 
-def url_replacer(media_url, match) -> str:
+def url_replacer(media_url: List[str], match: re.match) -> str:
     """
     Used in the regexp replacer function to wrap BaseURL
     elements to point to the SegmentProxy lambda.
@@ -28,9 +29,9 @@ def url_replacer(media_url, match) -> str:
     For example <BaseURL>http://example.site/foo</BaseURL> becomes
     <BaseURL>http://my.lambda/api/media/http%3A%2F%2Fexample.site%2Ffoo/</BaseURL>
     """
-    return ''.join(media_url + [
-        urllib.parse.quote(match.group('url'), safe=''),
-        r'/</BaseURL>'])
+    origin_url = unescape(match.group('url'))
+    origin_url = encode_url(origin_url)
+    return ''.join(media_url + [origin_url, r'/</BaseURL>'])
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     """
@@ -38,10 +39,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     manifest so that all requsts for media segments will be directed
     to the SegmentProxy lambda.
     """
-
-    logging.debug('Processing manifest request %s', req.route_params.get('manifest'))
-
-    manifest_url = urllib.parse.unquote(req.route_params.get('manifest'))
+    manifest = req.route_params.get('manifest')
+    logging.debug('Processing manifest request %s', manifest)
+    manifest_url = decode_url(manifest)
+    logging.debug('Manifest origin URL: %s', manifest_url)
     origin = fetch(req, manifest_url)
     
     try:
