@@ -61,5 +61,5 @@ def fetch(req: func.HttpRequest, url: str) -> requests.Response:
     headers['host'] = parts.hostname
     origin_url = urllib.parse.urlunsplit((parts.scheme, parts.netloc,
         parts.path, query, parts.fragment))
-    logging.debug("Request %s", origin_url)
+    logging.info("Request %s", origin_url)
     return requests.get(origin_url, headers=headers)

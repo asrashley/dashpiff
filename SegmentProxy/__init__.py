@@ -24,8 +24,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     An httpTrigger lambda that will remove the PIFF box in DASH
     media segments by translating them into "free" boxes.
     """
-    logging.debug('Processing media request %s %s',
+    logging.info('Processing media request %s %s',
         req.route_params.get('origin'), req.route_params.get('path'))
+    logging.info("url=%s", req.url)
 
     # extract the original BaseURL from the URL that triggered this
     # function and then append the segment path, to create a URL
