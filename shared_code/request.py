@@ -1,7 +1,6 @@
 """
 Utility function to make an HTTP request to origin
 """
-import binascii
 import logging
 from typing import Dict
 import urllib
@@ -9,27 +8,36 @@ import urllib
 import azure.functions as func
 import requests
 
-def encode_url(url: str, use_base64: bool = True) -> str:
+ESCAPE_TABLE = [
+    ('!', '!!'),
+    (':', '!0'),
+    ('/', '!1'),
+    ('#', '!2'),
+    ('~', '!3'),
+    ('?', '!4'),
+]
+
+def encode_url(url: str) -> str:
     """
     Wrap the given URL into a form that can be used as a path
     component in another URL.
 
     Using simple URL encoding does not work on Azure as it
     partially undoes the %2F encoding, producing a URL
-    that cannot be decoded.
+    that cannot be decoded. This function uses its own
+    escaping mechanism using ! as the escape character.
     """
-    if use_base64:
-        b64 = binascii.b2a_base64(bytes(url, 'utf-8'), newline=False)
-        return str(b64, 'utf-8')
-    return urllib.parse.quote(url, safe='')
+    for in_chr, out_str in ESCAPE_TABLE:
+        url = url.replace(in_chr, out_str)
+    return url
 
 def decode_url(url: str) -> str:
     """
     Undo the output of encode_url function
     """
-    if url.startswith(r'http%3A%2F%2F'):
-        return urllib.parse.unquote(url)
-    return str(binascii.a2b_base64(url), 'utf-8')
+    for in_chr, out_str in reversed(ESCAPE_TABLE):
+        url = url.replace(out_str, in_chr)
+    return url
 
 def fetch(req: func.HttpRequest, url: str) -> requests.Response:
     """
@@ -45,7 +53,11 @@ def fetch(req: func.HttpRequest, url: str) -> requests.Response:
     parts = urllib.parse.urlparse(url)
     query = parts.query
     if req.params:
-        query = urllib.parse.urlencode(req.params)
+        # We can't use the normal URL encoding of CGI parameters because some
+        # CDNs (such as Akamai) don't correctly undo the escaping of CGI
+        # parameters
+        params = [f'{key}={value}' for key, value in req.params.items()]
+        query = '&'.join(params)
     headers['host'] = parts.hostname
     origin_url = urllib.parse.urlunsplit((parts.scheme, parts.netloc,
         parts.path, query, parts.fragment))
