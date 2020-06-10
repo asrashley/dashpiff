@@ -2,10 +2,9 @@
 Utility function to make an HTTP request to origin
 """
 import logging
-from typing import Dict
+from typing import Dict, Optional
 import urllib
 
-import azure.functions as func
 import requests
 
 ESCAPE_TABLE = [
@@ -39,7 +38,7 @@ def decode_url(url: str) -> str:
         url = url.replace(out_str, in_chr)
     return url
 
-def fetch(req: func.HttpRequest, url: str) -> requests.Response:
+def fetch(url: str, headers: Dict, params: Optional[Dict]) -> requests.Response:
     """
     Make an HTTP GET request to origin. It copies the HTTP headers
     from the client request into the origin request. Any query
@@ -48,18 +47,17 @@ def fetch(req: func.HttpRequest, url: str) -> requests.Response:
     :req: the client request
     :url: The origin URL
     """
-    headers: Dict[str, str] = {}
-    headers.update(req.headers)
+    origin_headers: Dict[str, str] = {}
+    origin_headers.update(headers)
     parts = urllib.parse.urlparse(url)
     query = parts.query
-    if req.params:
+    if params:
         # We can't use the normal URL encoding of CGI parameters because some
         # CDNs (such as Akamai) don't correctly undo the escaping of CGI
         # parameters
-        params = [f'{key}={value}' for key, value in req.params.items()]
-        query = '&'.join(params)
-    headers['host'] = parts.hostname
+        query = '&'.join([f'{key}={value}' for key, value in params.items()])
+    origin_headers['host'] = parts.hostname
     origin_url = urllib.parse.urlunsplit((parts.scheme, parts.netloc,
         parts.path, query, parts.fragment))
-    logging.info("Request %s", origin_url)
-    return requests.get(origin_url, headers=headers)
+    logging.debug("Origin request %s", origin_url)
+    return requests.get(origin_url, headers=origin_headers)

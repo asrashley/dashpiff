@@ -43,7 +43,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.debug('Processing manifest request %s', manifest)
     manifest_url = decode_url(manifest)
     logging.debug('Manifest origin URL: %s', manifest_url)
-    origin = fetch(req, manifest_url)
+    origin = fetch(manifest_url, req.headers, req.params)
     
     try:
         mimetype = origin.headers['Content-Type']
