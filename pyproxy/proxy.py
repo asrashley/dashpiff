@@ -74,14 +74,19 @@ class ProxyAddAuthentication(BaseHTTPRequestHandler):
         """
         if self.command == 'POST' or query is not None:
             try:
-                url = self.extract_url_from_request(query, body)
+                mpd_url = self.extract_url_from_request(query, body)
             except (ValueError, KeyError) as err:
                 logging.error("Failed to extract URL field: %s %s", type(err), err)
-                url = None
-            if not url:
+                mpd_url = None
+            if not mpd_url:
                 self.send_error(400, 
                     'Field "url" is required either in the query string or in the request body')
                 return
+            # remove query string and fragment from the requested URL, as that must not
+            # be wrapped
+            mpd_parts = urllib.parse.urlparse(mpd_url)
+            mpd_url = urllib.parse.urlunsplit((mpd_parts.scheme, mpd_parts.netloc,
+                    mpd_parts.path, '', ''))
             req_url = self.request_url()
             logging.debug("Request url = %s", req_url)
             parts = urllib.parse.urlparse(req_url)
@@ -89,7 +94,10 @@ class ProxyAddAuthentication(BaseHTTPRequestHandler):
             if parts.port and parts.port != 80:
                 manifest_url.append(f':{parts.port}')
             manifest_url.append(self.MANIFEST_PATH)
-            manifest_url.append(encode_url(url))
+            manifest_url.append(encode_url(mpd_url))
+            if mpd_parts.query:
+                manifest_url.append('?')
+                manifest_url.append(mpd_parts.query)
             result = dict(url=''.join(manifest_url))
             self.respond(body=json.dumps(result), mimetype="application/json",
                 status_code=200)
