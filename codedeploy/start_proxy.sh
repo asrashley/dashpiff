@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cd /var/www/app/ && python -m pyproxy.proxy $*
+cd /var/www/app/ && python3 -m pyproxy.proxy $*

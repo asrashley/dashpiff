@@ -4,6 +4,8 @@ files:
   - source: /html/index.html
     destination: /var/www/html/
   - source: /codedeploy/default.conf
+    destination: /etc/nginx/default.d/
+  - source: /codedeploy/pyproxy.conf
     destination: /etc/nginx/conf.d/
   - source: /shared_code/
     destination: /var/www/app/shared_code/
