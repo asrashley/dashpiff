@@ -1,8 +1,18 @@
 #!/bin/bash
-yum install -y nginx python3
-mkdir -p /var/www/html
-mkdir -p /var/www/app/shared_code
-mkdir -p /var/www/app/pyproxy
 
+function die() {
+  echo $*
+  exit 1
+}
 
-
+amazon-linux-extras enable nginx1 || die "Failed to enable nginx Amazon extra"
+yum clean metadata
+yum install -y nginx || die "Failed to install nginx"
+# remove "location / {" rule from the installed nginx.conf, because
+# default.conf will provide the rules for the root of the web server
+sed -i -e 's/location \/ {/location \/install {/' /etc/nginx/nginx.conf
+yum install -y python3 || die "Failed to install Python3"
+yum install -y python3-pip || die "Failed to install Python3 pip"
+mkdir -p /var/www/html || die "Failed to create /var/www/html"
+mkdir -p /var/www/app/shared_code || die "Failed to create /var/www/app/shared_code"
+mkdir -p /var/www/app/pyproxy || die "Failed to create /var/www/app/pyproxy"

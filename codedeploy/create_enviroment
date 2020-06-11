@@ -1,5 +1,5 @@
 #!/bin/bash
 
-command pip install -r /var/www/app/requirements.txt
-command pip freeze
+pip-3 install -r /var/www/app/requirements.txt
+pip-3 freeze
 chmod +x /var/www/app/start_proxy.sh
