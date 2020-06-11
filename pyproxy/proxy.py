@@ -296,7 +296,11 @@ def main():
     parser.add_argument("-p", "--port", dest="port", default=8001,
                         action="store", type=int,
                         help="Run HTTP proxy on port [%(default)s]")
+    parser.add_argument("--pid-file", dest="pid_file", help="save PID of process to this file")
     options = parser.parse_args()
+    if options.pid_file:
+        with open(options.pid_file, 'wt') as pidfile:
+            pidfile.write(str(os.getpid()) + "\n")
     env = os.environ.copy()
     log_level = logging.INFO
     if options.verbosity:
@@ -314,6 +318,8 @@ def main():
     finally:
         logging.info('Stopping proxy')
         prxy.stop()
+    if options.pid_file:
+        os.remove(options.pid_file)
 
 if __name__ == "__main__":
     main()

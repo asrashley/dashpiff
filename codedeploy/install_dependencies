@@ -1,0 +1,8 @@
+#!/bin/bash
+yum install -y nginx python3
+mkdir -p /var/www/html
+mkdir -p /var/www/app/shared_code
+mkdir -p /var/www/app/pyproxy
+
+
+

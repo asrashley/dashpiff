@@ -1,0 +1,15 @@
+[Unit]
+Description=Reverse proxy server to remove PIFF data
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/var/www/app/start_proxy.sh --pid-file /run/pyproxy.pid
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartSec=15s
+
+[Install]
+WantedBy=multi-user.target
