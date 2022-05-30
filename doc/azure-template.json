@@ -1,0 +1,192 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sites_dashpiff_name": {
+            "defaultValue": "dashpiff",
+            "type": "String"
+        },
+        "serverfarms_UKSouthLinuxDynamicPlan_externalid": {
+            "defaultValue": "/subscriptions/.../resourceGroups/dashpiff/providers/Microsoft.Web/serverfarms/UKSouthLinuxDynamicPlan",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('sites_dashpiff_name')]",
+            "location": "UK South",
+            "kind": "functionapp,linux",
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(parameters('sites_dashpiff_name'), '.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(parameters('sites_dashpiff_name'), '.scm.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[parameters('serverfarms_UKSouthLinuxDynamicPlan_externalid')]",
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "siteConfig": {},
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": false,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": false,
+                "redundancyMode": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('sites_dashpiff_name'), '/web')]",
+            "location": "UK South",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_dashpiff_name'))]"
+            ],
+            "properties": {
+                "numberOfWorkers": -1,
+                "defaultDocuments": [
+                    "Default.htm",
+                    "Default.html",
+                    "Default.asp",
+                    "index.htm",
+                    "index.html",
+                    "iisstart.htm",
+                    "default.aspx",
+                    "index.php"
+                ],
+                "netFrameworkVersion": "v4.0",
+                "linuxFxVersion": "python|3.8",
+                "requestTracingEnabled": false,
+                "remoteDebuggingEnabled": false,
+                "httpLoggingEnabled": false,
+                "logsDirectorySizeLimit": 35,
+                "detailedErrorLoggingEnabled": false,
+                "publishingUsername": "$dashpiff",
+                "scmType": "None",
+                "use32BitWorkerProcess": false,
+                "webSocketsEnabled": false,
+                "alwaysOn": false,
+                "managedPipelineMode": "Integrated",
+                "virtualApplications": [
+                    {
+                        "virtualPath": "/",
+                        "physicalPath": "site\\wwwroot",
+                        "preloadEnabled": false
+                    }
+                ],
+                "loadBalancing": "LeastRequests",
+                "experiments": {
+                    "rampUpRules": []
+                },
+                "autoHealEnabled": false,
+                "cors": {
+                    "allowedOrigins": [
+                        "https://functions.azure.com",
+                        "https://functions-staging.azure.com",
+                        "https://functions-next.azure.com"
+                    ],
+                    "supportCredentials": false
+                },
+                "localMySqlEnabled": false,
+                "ipSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 1,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 1,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictionsUseMain": false,
+                "http20Enabled": false,
+                "minTlsVersion": "1.2",
+                "ftpsState": "AllAllowed",
+                "reservedInstanceCount": 0
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/functions",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('sites_dashpiff_name'), '/ManifestProxy')]",
+            "location": "UK South",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_dashpiff_name'))]"
+            ],
+            "properties": {
+                "script_root_path_href": "https://dashpiff.azurewebsites.net/admin/vfs/home/site/wwwroot/ManifestProxy/",
+                "script_href": "https://dashpiff.azurewebsites.net/admin/vfs/home/site/wwwroot/ManifestProxy/__init__.py",
+                "config_href": "https://dashpiff.azurewebsites.net/admin/vfs/home/site/wwwroot/ManifestProxy/function.json",
+                "href": "https://dashpiff.azurewebsites.net/admin/functions/ManifestProxy",
+                "config": {}
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/functions",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('sites_dashpiff_name'), '/SegmentProxy')]",
+            "location": "UK South",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_dashpiff_name'))]"
+            ],
+            "properties": {
+                "script_root_path_href": "https://dashpiff.azurewebsites.net/admin/vfs/home/site/wwwroot/SegmentProxy/",
+                "script_href": "https://dashpiff.azurewebsites.net/admin/vfs/home/site/wwwroot/SegmentProxy/__init__.py",
+                "config_href": "https://dashpiff.azurewebsites.net/admin/vfs/home/site/wwwroot/SegmentProxy/function.json",
+                "href": "https://dashpiff.azurewebsites.net/admin/functions/SegmentProxy",
+                "config": {}
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/functions",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('sites_dashpiff_name'), '/URLCreate')]",
+            "location": "UK South",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_dashpiff_name'))]"
+            ],
+            "properties": {
+                "script_root_path_href": "https://dashpiff.azurewebsites.net/admin/vfs/home/site/wwwroot/URLCreate/",
+                "script_href": "https://dashpiff.azurewebsites.net/admin/vfs/home/site/wwwroot/URLCreate/__init__.py",
+                "config_href": "https://dashpiff.azurewebsites.net/admin/vfs/home/site/wwwroot/URLCreate/function.json",
+                "href": "https://dashpiff.azurewebsites.net/admin/functions/URLCreate",
+                "config": {}
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/hostNameBindings",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('sites_dashpiff_name'), '/', parameters('sites_dashpiff_name'), '.azurewebsites.net')]",
+            "location": "UK South",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_dashpiff_name'))]"
+            ],
+            "properties": {
+                "siteName": "dashpiff",
+                "hostNameType": "Verified"
+            }
+        }
+    ]
+}

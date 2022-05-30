@@ -41,21 +41,27 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     if req.method == 'POST' or req.params.get('url'):
         try:
-            url = extract_url_from_request(req)
+            mpd_url = extract_url_from_request(req)
         except (ValueError, KeyError) as err:
             logging.error("Failed to extract URL field: %s %s", type(err), err)
-            url = None
-        if not url:
+            mpd_url = None
+        if not mpd_url:
             return func.HttpResponse(
                 'Field "url" is required either in the query string or in the request body',
                 status_code=400
             )
+        mpd_parts = urllib.parse.urlparse(mpd_url)
+        mpd_url = urllib.parse.urlunsplit((mpd_parts.scheme, mpd_parts.netloc,
+                mpd_parts.path, '', ''))
         parts = urllib.parse.urlparse(req.url)
         manifest_url = ['http://', parts.hostname]
         if parts.port and parts.port != 80:
             manifest_url.append(f':{parts.port}')
         manifest_url.append('/api/dash/')
-        manifest_url.append(encode_url(url))
+        manifest_url.append(encode_url(mpd_url))
+        if mpd_parts.query:
+            manifest_url.append('?')
+            manifest_url.append(mpd_parts.query)
         result = dict(url=''.join(manifest_url))
         return func.HttpResponse(body=json.dumps(result), mimetype="application/json",
             status_code=200)

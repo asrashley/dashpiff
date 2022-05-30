@@ -1,0 +1,42 @@
+version: 0.0
+os: linux
+files:
+  - source: /html/index.html
+    destination: /var/www/html/
+  - source: /codedeploy/default.conf
+    destination: /etc/nginx/default.d/
+  - source: /codedeploy/pyproxy.conf
+    destination: /etc/nginx/conf.d/
+  - source: /shared_code/
+    destination: /var/www/app/shared_code/
+  - source: /pyproxy/
+    destination: /var/www/app/pyproxy/
+  - source: /requirements.txt
+    destination: /var/www/app/
+  - source: /codedeploy/start_proxy.sh
+    destination: /var/www/app/
+  - source: /codedeploy/pyproxy.service
+    destination: /etc/systemd/system/
+permissions:
+  - object: /var/www/html
+    pattern: "**"
+    owner: ec2-user
+    group: ec2-user
+hooks:
+  BeforeInstall:
+    - location: codedeploy/install_dependencies
+      timeout: 1000
+      runas: root
+  AfterInstall:
+    - location: codedeploy/create_enviroment
+      timeout: 1000
+      runas: root
+  ApplicationStart:
+    - location: codedeploy/start_server
+      timeout: 1000
+      runas: root
+  ApplicationStop:
+    - location: codedeploy/stop_server
+      timeout: 1000
+      runas: root
+      
